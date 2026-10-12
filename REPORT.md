@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| Họ và tên | Nguyễn Khánh Đỗ |
+| Họ và tên | Nguyễn Khánh Đô |
 | MSSV (đúng bằng `LAB_STUDENT_ID` trong `.env`) | `2A202602687` |
 | GitHub | `Diohus` |
 | Trip dùng cho bài tập sập và chạy lại (xem GUIDE, bước 5) | `trip-09608` |
