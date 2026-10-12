@@ -28,12 +28,17 @@ A có `ts_utc` dạng ISO UTC, `speed_mps` tính bằng m/s, `heading_deg`, `lat
 ### Câu 2
 Pipeline đưa hai nguồn về một schema như thế nào (đơn vị, kiểu thời gian, **độ lệch đồng hồ**)? Bằng chứng nào trong kết quả bước 2 cho thấy đã đúng? Dán bảng quarantine của bạn (số dòng theo từng lý do, từng drive) và giải thích vì sao dòng lỗi vào `rejects` thay vì bị xoá.
 
-(trả lời ở đây)
+Staging A ép `ts_utc` sang thời gian UTC và giữ `speed_mps`; staging B đổi `timestamp_ms` sang thời gian UTC sau khi trừ offset 1.500 ms từ `bronze.video_files`, đổi `spd_kmh / 3.6` sang m/s và các cột bàn đạp phần trăm sang tỷ lệ. Silver sạch có 2.968 dòng A và 3.181 dòng B; thời điểm đầu B là `2025-10-08 14:30:00.009+00:00`, lệch 9 ms so với mốc video. Quarantine giữ 106 dòng cùng lý do để có thể kiểm tra nguồn và tái xử lý, thay vì xóa mất bằng chứng.
+
+| Drive | Trùng | Thiếu tốc độ | Tốc độ ngoài khoảng |
+|---|---:|---:|---:|
+| A | 20 | 30 | 3 |
+| B | 20 | 30 | 3 |
 
 ### Câu 3
 Vì sao test `max_gap_ms` là `warn` còn `in_range` là `error`? Kết quả thí nghiệm `break-gate` của bạn (`break_gate.json`): test nào bắt được, bao nhiêu dòng, và điều đó cho biết gì về vai trò của "cổng chất lượng"?
 
-(trả lời ở đây)
+`max_gap_ms` chỉ cảnh báo đoạn cảm biến mất tín hiệu đã biết: bước 2 có `PASS=6 WARN=1 ERROR=0`, nên pipeline vẫn chạy và khung mất đồng bộ sẽ được xử lý ở bước sau. `in_range` chặn tốc độ vô lý trước khi dùng để huấn luyện. Trong `break_gate.json`, khi tạm nới luật nhận tốc độ lên 1.000 m/s, `in_range_silver_telemetry_speed_mps__70__0` phát hiện 6 dòng, `PASS=5 WARN=1 ERROR=1`; cổng lỗi dừng dữ liệu xấu. Khôi phục luật 70 m/s cho `PASS=6 WARN=1 ERROR=0`.
 
 ## Bước 3 · Silver frames
 
