@@ -1,0 +1,4 @@
+tests/test_units.py text eol=lf
+pipeline/verify.py text eol=lf
+docker-compose.yml text eol=lf
+*.sh text eol=lf

@@ -4,17 +4,19 @@
 
 | | |
 |---|---|
-| Họ và tên | `<điền>` |
-| MSSV (đúng bằng `LAB_STUDENT_ID` trong `.env`) | `<điền>` |
-| GitHub | `<điền: tên tài khoản>` |
-| Trip dùng cho bài tập sập và chạy lại (xem GUIDE, bước 5) | `<điền: trip-xxxxx>` |
+| Họ và tên | Nguyễn Khánh Đỗ |
+| MSSV (đúng bằng `LAB_STUDENT_ID` trong `.env`) | `2A202602687` |
+| GitHub | `Diohus` |
+| Trip dùng cho bài tập sập và chạy lại (xem GUIDE, bước 5) | `trip-09608` |
+
+MSSV có chữ `A`, nên lệnh `int(MSSV)` trong GUIDE không nhận được. Tôi dùng phần số `202602687`: `202602687 % 26 = 25`, ứng với `trip-09608` trong danh sách 26 trip.
 
 ## Kết quả cuối
 
-- `dataset_version` của bạn: `<điền>`  (phải khớp `report/evidence/run_summary.json`)
-- Số khung hình train / val / test của bạn: `<điền>`
-- `report/verify.txt`: tạo bằng `python3 scripts/check_submission.py --save-verify` (phải có `27/27 checks passed`).
-- Ảnh chụp trong `report/screenshots/`: `airflow_graph.png`, `minio_lake.png`, `metabase_dashboard.png`, và ảnh bài tập sập/chạy lại (log task đỏ thấy trip của bạn).
+- `dataset_version` của bạn: `62a803b13357`  (phải khớp `report/evidence/run_summary.json`)
+- Số khung hình train / val / test của bạn: `711 / 174 / 134`.
+- `report/verify.txt`: `27/27 checks passed` ở lượt chạy cuối từ lake trống.
+- Ảnh chụp trong `report/screenshots/`: `airflow_graph.png`, `minio_lake.png`, `metabase_dashboard.png`, `airflow_failed_graph.png`, `fail_task_log.png`, `airflow_retry_graph.png`.
 
 ## Bước 1 · Bronze
 
@@ -68,33 +70,42 @@ Trong 1.019 frame đạt điều kiện của 26 trip, chia ngẫu nhiên theo f
 ### Câu 7
 Vì sao `dataset_version` là **băm nội dung** chứ không phải ngày giờ hay số đếm? Hai lần chạy liên tiếp cho kết quả gì? Vì sao `dataset_version` của bạn **khác** bạn bè dù cùng dữ liệu (liên hệ MSSV)?
 
-Pipeline băm danh sách `frame_id|split` đã sắp xếp, nên cùng tập frame và cách chia cho cùng mã `62a803b13357` dù export lại ở thời điểm khác. Hai lần export liên tiếp của tôi đều cho phiên bản này, với 1.019 frame: train 711, val 174, test 134. MSSV `2A202602687` được nối vào `trip_id` khi sắp thứ tự băm MD5 để gán split; MSSV khác có thể đổi trip ở từng split và làm mã phiên bản khác. Ngày giờ hoặc số đếm không chứng minh hai dataset có cùng nội dung.
+Pipeline băm danh sách `frame_id|split` đã sắp xếp, nên cùng tập frame và cách chia cho cùng mã `62a803b13357` dù export lại ở thời điểm khác. Hai lần export liên tiếp của tôi đều cho phiên bản này, với 1.019 frame: train 711, val 174, test 134. MSSV được nối vào `trip_id` khi sắp thứ tự băm MD5 để gán split: thử `2A202602688` cho mã `0bed563a4be9` và split 707/167/145; khôi phục `2A202602687` thì mã trở lại `62a803b13357`. Ngày giờ hoặc số đếm không chứng minh hai dataset có cùng nội dung.
 
 ### Câu 8
 Đọc phần `lineage` trong `manifest.json` của dataset bạn. Trả lời "dataset này được tạo từ dữ liệu nào?" bằng chính nội dung đó. Nếu một người hỏi 3 tháng sau, thông tin nào giúp tái tạo lại đúng dataset này?
 
-(trả lời ở đây)
+`manifest.json` cuối của `62a803b13357` ghi Bronze `raw_telemetry_a=0`, `raw_telemetry_b=0`, `trips_raw=0`, `video_files=1`; Silver `frames=25`, `telemetry=0`, `frames_flagged=0`, `frame_telemetry=0`. Hai video nguồn có SHA256 A `636ba1a98dfc5ba665d1c935e1d2064e69f4df360ff9ffbd15795957d5e7e9aa` và B `bfa62703f645ff77a8578ae3fc74a00881140d38a404d43c8e2af265bbee9fdc`. Để tái tạo sau 3 tháng cần đúng file nguồn theo SHA256, phiên bản bảng/luật xử lý, MSSV `2A202602687` dùng cho split và danh sách `frame_id|split` của manifest; mã băm manifest Parquet là `582eba33134264397e620f9dad7b74bfaca4171f32e3655f5137c1cad56ece69`.
 
 ## Bước 5 · Điều phối và phục vụ
 
 ### Câu 9
 Mô tả chính xác điều xảy ra khi trip của bạn sập rồi chạy lại: bao nhiêu task chuyển đỏ, bao nhiêu task `upstream_failed`, bạn clear gì, dữ liệu có nhân đôi không, `dataset_version` có đổi không? Bằng chứng (ảnh, số) là gì?
 
-(trả lời ở đây)
+Sau reset, đúng `silver_frames[25]` của `trip-09608` chuyển đỏ; log trong `fail_task_log.png` ghi `simulated crash while extracting trip-09608`. Bảy task phụ thuộc ở trạng thái `upstream_failed`. Tôi tắt tùy chọn Downstream và clear đúng task đỏ (Affected Tasks: 1); nó chạy lại thành công. Airflow 2.10 không tự đặt lại bảy trạng thái `upstream_failed`, nên tôi clear tiếp chỉ bảy task này (Only Failed, Affected Tasks: 7) để DAG xanh như `airflow_retry_graph.png`. Không task frame tốt nào chạy lại; kiểm tra sau retry vẫn `27/27`, Silver có 1.246 `frame_id` duy nhất, Gold có 1.019 frame và `dataset_version` giữ `62a803b13357`.
 
 ### Câu 10
 Nâng từ 2 drive lên **500 xe mỗi ngày**: ba thành phần nào của pipeline này sẽ vỡ đầu tiên, và bạn thay bằng gì (nối với slide 12, 22, 23)?
 
-(trả lời ở đây)
+(1) Trích frame bằng FFmpeg trong một container Airflow với `max_active_tis_per_dagrun=1` sẽ thành hàng đợi khoảng 6.500 trip/ngày nếu vẫn 13 trip/xe; chuyển sang worker phân tán với hàng đợi và autoscaling. (2) DuckDB ghi một file cục bộ để dbt quét toàn bộ frame/telemetry sẽ nghẽn CPU, RAM và I/O; dùng Delta trên object storage với engine phân tán, xử lý tăng dần theo partition/event time. (3) Postgres phục vụ mart/gallery ảnh và Metabase trên một máy sẽ quá tải truy vấn đồng thời; dùng warehouse cột, mart tổng hợp trước và giới hạn gallery theo trang. Cần đo lưu lượng ingest và độ trễ từng chặng trước khi chọn kích thước cụm.
 
 ## Câu hỏi riêng của bạn trên Metabase
 
 Câu SQL bạn thêm vào dashboard và điều nó cho biết:
 
-(trả lời ở đây)
+Tôi thêm câu hỏi “Trip nào bị loại nhiều frame nhất?” vào dashboard, dùng SQL:
+
+```sql
+select drive_id, trip_id, frames, frames_kept,
+       round(100.0*(frames-frames_kept)/nullif(frames,0),1) as drop_pct
+from marts.mart_trip_summary
+order by drop_pct desc limit 5;
+```
+
+`drive_a/trip-04622` đứng đầu: 60 frame, giữ 26, loại 34 (`56,7%`). Đây là trip cần xem lại ảnh và cờ chất lượng trước khi quyết định điều chỉnh ngưỡng; tỷ lệ cao tự nó chưa chứng minh camera hỏng.
 
 ## Nhìn lại
 
 Điều bạn thấy bất ngờ nhất, điều gì còn chưa rõ, và một lỗi dữ liệu mà bạn nghĩ pipeline **chưa** bắt được (nếu có). Tối đa 8 dòng.
 
-(trả lời ở đây)
+Bất ngờ nhất là 61 frame tối ở drive B vẫn được giữ, trong khi chỉ 4 frame đen bị loại: độ sáng thấp không đồng nghĩa ảnh vô dụng. Tôi còn muốn hiểu rõ cách chọn ngưỡng dHash theo tốc độ xe thay vì cố định 2 bit. Một lỗi chưa có test rõ là GPS nhảy vị trí phi thực tế dù từng giá trị tọa độ vẫn hợp lệ; cần kiểm tra quãng đường và tốc độ suy ra giữa hai mốc thời gian. Khi chỉ clear task đỏ, Airflow 2.10 giữ bảy task `upstream_failed`; phải clear riêng chúng để DAG tiếp tục.
