@@ -63,12 +63,12 @@ Frame đen gần như không có tín hiệu hình ảnh nên bị loại; frame
 ### Câu 6
 Dựa vào `leakage.json`: chia theo khung hình làm bao nhiêu trip bị chia cắt, so với chia theo trip? Vì sao điều này làm điểm kiểm thử đẹp một cách giả tạo?
 
-(trả lời ở đây)
+Trong 1.019 frame đạt điều kiện của 26 trip, chia ngẫu nhiên theo frame làm cả 26 trip nằm ở nhiều split và cả 26 có frame ở train lẫn test. Chia theo trip trong Gold làm 0 trip bị chia cắt. Các frame liền nhau cùng cảnh, vật thể và điều kiện ánh sáng rất giống nhau; khi cảnh của tập train xuất hiện lại trong test, mô hình có thể ghi nhớ thay vì tổng quát hóa, khiến điểm test cao giả tạo.
 
 ### Câu 7
 Vì sao `dataset_version` là **băm nội dung** chứ không phải ngày giờ hay số đếm? Hai lần chạy liên tiếp cho kết quả gì? Vì sao `dataset_version` của bạn **khác** bạn bè dù cùng dữ liệu (liên hệ MSSV)?
 
-(trả lời ở đây)
+Pipeline băm danh sách `frame_id|split` đã sắp xếp, nên cùng tập frame và cách chia cho cùng mã `62a803b13357` dù export lại ở thời điểm khác. Hai lần export liên tiếp của tôi đều cho phiên bản này, với 1.019 frame: train 711, val 174, test 134. MSSV `2A202602687` được nối vào `trip_id` khi sắp thứ tự băm MD5 để gán split; MSSV khác có thể đổi trip ở từng split và làm mã phiên bản khác. Ngày giờ hoặc số đếm không chứng minh hai dataset có cùng nội dung.
 
 ### Câu 8
 Đọc phần `lineage` trong `manifest.json` của dataset bạn. Trả lời "dataset này được tạo từ dữ liệu nào?" bằng chính nội dung đó. Nếu một người hỏi 3 tháng sau, thông tin nào giúp tái tạo lại đúng dataset này?
