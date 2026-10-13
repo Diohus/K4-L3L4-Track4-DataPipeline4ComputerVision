@@ -9,12 +9,10 @@
 | GitHub | `Diohus` |
 | Trip dùng cho bài tập sập và chạy lại (xem GUIDE, bước 5) | `trip-09608` |
 
-MSSV có chữ `A`, nên lệnh `int(MSSV)` trong GUIDE không nhận được. Tôi dùng phần số `202602687`: `202602687 % 26 = 25`, ứng với `trip-09608` trong danh sách 26 trip.
-
 ## Kết quả cuối
 
-- `dataset_version` của bạn: `62a803b13357`  (phải khớp `report/evidence/run_summary.json`)
-- Số khung hình train / val / test của bạn: `711 / 174 / 134`.
+- `dataset_version`: `62a803b13357`
+- Số khung hình train / val / testtest: `711 / 174 / 134`.
 - `report/verify.txt`: `27/27 checks passed` ở lượt chạy cuối từ lake trống.
 - Ảnh chụp trong `report/screenshots/`: `airflow_graph.png`, `minio_lake.png`, `metabase_dashboard.png`, `airflow_failed_graph.png`, `fail_task_log.png`, `airflow_retry_graph.png`.
 
